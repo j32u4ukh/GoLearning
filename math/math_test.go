@@ -2,6 +2,8 @@ package math
 
 import "testing"
 
+// 測試指令 go test -v -cover=true .\math\math_test.go .\math\math.go
+
 // test function 開頭需要是 Test 的樣子
 func TestMean1(t *testing.T) {
 	if Mean([]float64{1, 2, 3}) != 2 {

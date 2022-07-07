@@ -1,0 +1,26 @@
+syntax = "proto3";
+option go_package = ".;proto";
+
+// 安裝：go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.28.0
+// 編譯：protoc --go_out=:.\proto .\proto\school.proto
+// 編譯 gRPC：protoc --go_out=.\proto --go-grpc_out=.\proto .\proto\*.proto 
+
+message Teacher{
+  string name = 1;
+  int32 age = 2;
+}
+
+service WebServer {  
+    rpc GetStudentData (GetStudentDataReq) returns (GetStudentDataRes) {}
+}
+
+message GetStudentDataReq {  
+    int64  student_id = 1;
+    string class = 2;
+}
+
+message GetStudentDataRes {  
+    string student_name = 1;
+    int64 student_heigh = 2;
+    int64 student_weight = 3;
+}
