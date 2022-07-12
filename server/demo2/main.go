@@ -5,12 +5,12 @@ import (
 	"log"
 	"net"
 
-	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/proto"
 )
 
 func main() {
 	log.Println("starting tcp server")
-	listener, err := net.Listen("tcp", "127.0.0.1:8080")
+	listener, err := net.Listen("tcp", ":8080")
 	checkError(err)
 
 	for {
@@ -23,7 +23,7 @@ func main() {
 func handleConn(conn net.Conn) {
 	log.Println("client connected")
 
-	defer conn.Close()
+	// defer conn.Close()
 
 	data := make([]byte, 4096)
 	length, err := conn.Read(data)
@@ -34,15 +34,6 @@ func handleConn(conn net.Conn) {
 	checkError(err)
 
 	log.Printf("received message: %s, timestamp: %v", messagePb.Text, messagePb.Timestamp)
-
-	// messageProto := lproto.Message{Text: "Hello World", Timestamp: time.Now().Unix()}
-	// data, err := proto.Marshal(&messageProto)
-	// checkError(err)
-
-	// length, err := conn.Write(data)
-	// checkError(err)
-
-	// log.Printf("Hello world sent, length %d bytes", length)
 }
 
 func checkError(err error) {
