@@ -1,0 +1,6 @@
+@ECHO ON
+SET GOOS=linux
+SET GOARCH=amd64
+go build 
+
+PAUSE

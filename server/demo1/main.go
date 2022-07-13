@@ -11,12 +11,19 @@ import (
 
 func main() {
 	log.Println("starting tcp server")
-	listener, err := net.Listen("tcp", ":8080")
+	listener, err := net.Listen("tcp", ":3306")
 	checkError(err)
+	timestamp := time.Now().Unix()
+	log.Printf("timestamp: %v", timestamp)
 
 	for {
-		if conn, err := listener.Accept(); err == nil {
+		conn, err := listener.Accept()
+
+		if err == nil {
+			log.Println("client connected")
 			handleConn(conn)
+		} else {
+			log.Printf("%+v", err)
 		}
 	}
 }
@@ -26,8 +33,12 @@ func handleConn(conn net.Conn) {
 
 	defer conn.Close()
 
-	messageProto := lproto.Message{Text: "Hello World", Timestamp: time.Now().Unix()}
+	timestamp := time.Now().Unix()
+
+	log.Println("client connected")
+	messageProto := lproto.Message{Text: "Hello World", Timestamp: timestamp}
 	data, err := proto.Marshal(&messageProto)
+	log.Printf("received message: %s, timestamp: %v", messageProto.Text, messageProto.Timestamp)
 	checkError(err)
 
 	length, err := conn.Write(data)
