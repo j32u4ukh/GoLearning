@@ -34,7 +34,7 @@ func main() {
 	Dch = make(chan bool)
 	Rch = make(chan []byte)
 	Wch = make(chan []byte)
-	addr, _ := net.ResolveTCPAddr("tcp", "192.168.100.142:3306")
+	addr, _ := net.ResolveTCPAddr("tcp", "127.0.0.1:8080")
 	conn, err := net.DialTCP("tcp", nil, addr)
 	//	conn, err := net.Dial("tcp", "127.0.0.1:6666")
 	if err != nil {
@@ -76,7 +76,7 @@ func RHandler(conn *net.TCPConn) {
 
 	for {
 		// 心跳包,回覆ack
-		data := make([]byte, 4096)
+		data := make([]byte, 2)
 		length, _ := conn.Read(data)
 
 		if length == 0 {
@@ -90,14 +90,19 @@ func RHandler(conn *net.TCPConn) {
 			fmt.Println("send ht pack ack")
 		} else if data[0] == Req {
 			fmt.Println("recv data pack")
-			fmt.Printf("%v\n", string(data[2:]))
+			data = make([]byte, 4096)
+			length, _ = conn.Read(data)
+
+			fmt.Printf("%v\n", string(data))
 			Rch <- data[2:]
 			conn.Write([]byte{Res, '#'})
 		} else if data[0] == protobufReq {
 			fmt.Println("Recieve protobuf data")
+			data = make([]byte, 4096)
+			length, _ = conn.Read(data)
+
 			messagePb := lproto.Message{}
-			err = proto.Unmarshal(data[2:length], &messagePb)
-			fmt.Printf("data size: %d, proto size: %d\n", length, length-2)
+			err = proto.Unmarshal(data[:length], &messagePb)
 			checkError(err)
 
 			fmt.Printf("received message: %s, timestamp: %v\n", messagePb.Text, messagePb.Timestamp)

@@ -52,7 +52,7 @@ var ConnMap map[string]*Conn
 
 func main() {
 	ConnMap = make(map[string]*Conn)
-	listen, err := net.ListenTCP("tcp", &net.TCPAddr{IP: net.ParseIP("192.168.100.142"), Port: 3306, Zone: ""})
+	listen, err := net.ListenTCP("tcp", &net.TCPAddr{IP: net.ParseIP("127.0.0.1"), Port: 8080, Zone: ""})
 
 	if err != nil {
 		fmt.Println("監聽端口失敗:", err.Error())

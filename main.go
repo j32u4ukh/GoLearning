@@ -2,16 +2,22 @@ package main
 
 import (
 	"fmt"
+
+	lproto "GoLearning/proto"
+
+	"github.com/golang/protobuf/proto"
 )
 
 func main() {
-	data := []byte{'0'}
-	fmt.Printf("data size: %v\n", len(data))
+	msg := &lproto.Message{}
+	msg.Text = *proto.String("Hello Reflection")
 
-	content := []byte{'1', '1', '1', '1', '1'}
-	fmt.Printf("content size: %v\n", len(content))
+	ref := proto.MessageReflect(msg)
+	descriptor := ref.Descriptor()
 
-	data = append(data, content...)
-	fmt.Printf("data size: %v\n", len(data))
-	fmt.Printf("%v\n", data)
+	filedIds := descriptor.Fields()
+	for i := 0; i < filedIds.Len(); i++ {
+		filedId := filedIds.Get(i)
+		fmt.Printf("%s %s %v\n", filedId.Name(), filedId.FullName(), filedId.Kind())
+	}
 }
