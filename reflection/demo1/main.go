@@ -14,8 +14,8 @@ func main() {
 
 	ref := proto.MessageReflect(msg)
 	descriptor := ref.Descriptor()
-
 	filedIds := descriptor.Fields()
+
 	for i := 0; i < filedIds.Len(); i++ {
 		filedId := filedIds.Get(i)
 		// fmt.Printf("%s %s %v\n", filedId.Name(), filedId.FullName(), filedId.Kind())
