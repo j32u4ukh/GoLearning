@@ -14,6 +14,13 @@ func foo(res http.ResponseWriter, req *http.Request) {
 	var data []byte
 	req.Body.Read(data)
 	io.WriteString(res, "dog dog dog")
+
+	str := "dog dog dog"
+	fmt.Printf("str: %v\n", str)
+	bs := []byte(str)
+	fmt.Printf("bs: %v\n", bs)
+	bstr := string(bs)
+	fmt.Printf("bstr: %v\n", bstr)
 }
 
 func bar(res http.ResponseWriter, req *http.Request) {
