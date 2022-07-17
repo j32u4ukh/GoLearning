@@ -4,6 +4,7 @@ import (
 	lproto "GoLearning/proto"
 	"fmt"
 	"net"
+	"sync"
 
 	"google.golang.org/protobuf/proto"
 )
@@ -17,6 +18,8 @@ type Client13 struct {
 	conn *net.TCPConn
 }
 
+// TODO: 連線 和 維持運行 要區分為兩個區塊，方便斷線後重連
+// TODO: 先註冊要連線的目標、callback 函式，再一起進行連線。目前利用 sync.WaitGroup 等待所有連線成功
 func (c *Client13) Init(ip string, port int) {
 	c.Dch = make(chan bool)
 	c.Rch = make(chan []byte)
@@ -34,13 +37,37 @@ func (c *Client13) Init(ip string, port int) {
 	fmt.Println("已連接服務器")
 }
 
-func (c *Client13) Run() {
+func (c *Client13) Run(wg *sync.WaitGroup) {
 	defer c.conn.Close()
 	go c.handler(c.conn)
+	wg.Done()
 
 	if <-c.Dch {
 		fmt.Println("Addr: ", c.Addr)
 		fmt.Println("關閉連接")
+	}
+}
+
+func (c *Client13) RunServer(ip string, port int, wg *sync.WaitGroup) {
+	for {
+		addr, _ := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%d", ip, port))
+		var err error
+		c.conn, err = net.DialTCP("tcp", nil, addr)
+
+		if err != nil {
+			fmt.Println("連接服務端失敗:", err.Error())
+			return
+		}
+
+		fmt.Println("已連接服務器")
+		defer c.conn.Close()
+		go c.handler(c.conn)
+		wg.Done()
+
+		if <-c.Dch {
+			fmt.Println("Addr: ", c.Addr)
+			fmt.Println("關閉連接")
+		}
 	}
 }
 
@@ -57,21 +84,29 @@ func (c *Client13) handler(conn *net.TCPConn) {
 		}
 	}
 
-	go c.hHandler(conn)
+	go c.rHandler(conn)
 	go c.wHandler(conn)
 	go c.work()
 }
 
-func (c *Client13) hHandler(conn *net.TCPConn) {
+func (c *Client13) rHandler(conn *net.TCPConn) {
 	var err error
 
 	for {
 		// 心跳包,回覆ack
 		data := make([]byte, 2)
 		length, _ := conn.Read(data)
+		fmt.Println("data length:", length)
+
+		if data[0] == Close {
+			// TODO: 紀錄狀態為結束連線
+			c.Dch <- true
+		}
 
 		if length == 0 {
-			c.Dch <- true
+			// c.Dch <- true
+			// TODO: 若非 結束連線，則需再次連線
+			fmt.Println("length == 0")
 			return
 		}
 

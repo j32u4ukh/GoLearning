@@ -5,10 +5,12 @@ package main
 
 import (
 	"fmt"
+	"sync"
 	"time"
 )
 
 var (
+	Close       byte = 0
 	registerReq byte = 1 // 1 --- c register cid
 	registerRes byte = 2 // 2 --- s response
 
@@ -29,14 +31,25 @@ func checkError(err error) {
 	}
 }
 
-func main() {
-	// instance = &Client13Manager{}
-	// instance.Init()
+// Call to registered server
+func call() {
+	wg := &sync.WaitGroup{}
+	wg.Add(len(GetClient13Manager().Connects))
 
+	for _, c := range GetClient13Manager().Connects {
+		go GetClient13Manager().Connect(c, wg)
+	}
+
+	wg.Wait()
+}
+
+func main() {
+	GetClient13Manager().Connects = append(GetClient13Manager().Connects, GS)
+	call()
 	// ip := "127.0.0.1"
 	// port := 8080
-	GetClient13Manager().Connect(GS)
-	time.Sleep(7 * time.Second)
+	// GetClient13Manager().Connect(GS)
+	time.Sleep(3 * time.Second)
 
 	GetClient13Manager().Send(GS, []byte{Req, 'F', 'i', 'r', 's', 't'})
 	GetClient13Manager().Send(GS, []byte{Req, 'S', 'e', 'c', 'o', 'n', 'd'})

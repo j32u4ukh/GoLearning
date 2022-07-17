@@ -15,6 +15,7 @@ import (
 // c#d
 
 var (
+	Close       byte = 0
 	registerReq byte = 1 // 1 --- c register cid
 	registerRes byte = 2 // 2 --- s response
 
@@ -103,6 +104,8 @@ func (s *Server13) Run() {
 
 func (s *Server13) handler(conn net.Conn) {
 	defer conn.Close()
+	defer conn.Write([]byte{registerRes, '#', 'e', 'r'})
+
 	data := make([]byte, 128)
 	var uid string
 	var C *Conn

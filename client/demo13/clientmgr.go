@@ -13,8 +13,7 @@ type Client13Manager struct {
 	ClientMap map[string]*Client13
 	cmMux     sync.Mutex
 
-	cacheMap map[string][][]byte
-	cacheMux sync.Mutex
+	Connects []string
 
 	Dch chan bool
 	Cch chan string
@@ -38,16 +37,10 @@ func (cc *Client13Manager) Init() {
 }
 
 func (cc *Client13Manager) Send(s string, msg []byte) {
-	if c, ok := cc.ClientMap[s]; ok {
+	si := GetServerInfo(s)
+	addr := si.GetAddress()
+	if c, ok := cc.ClientMap[addr]; ok {
 		c.send(msg)
-	} else {
-		var cache [][]byte
-		var ok bool
-		if cache, ok = cc.cacheMap[s]; !ok {
-			cc.cacheMap[s] = make([][]byte, 0)
-		}
-
-		cc.cacheMap[s] = append(cache, msg)
 	}
 }
 
@@ -63,15 +56,21 @@ func (cc *Client13Manager) Send(s string, msg []byte) {
 // 	fmt.Println("cc.Cch <- ", client.Addr)
 // }
 
-func (cc *Client13Manager) Connect(s string) {
+func (cc *Client13Manager) Connect(s string, wg *sync.WaitGroup) {
 	si := GetServerInfo(s)
 	addr := si.GetAddress()
 	if _, ok := cc.ClientMap[addr]; !ok {
 		client := &Client13{Pch: &cc.Cch, Addr: addr}
-		client.Init(si.Ip, si.Port)
 		cc.addNewConnection(addr, client)
 
-		client.Run()
+		// // 連線
+		client.Init(si.Ip, si.Port)
+
+		// // 維持運行
+		client.Run(wg)
+
+		// client.RunServer(si.Ip, si.Port, wg)
+
 		fmt.Println("After client.Run(), Addr:", client.Addr)
 
 		if cc.Cch != nil {

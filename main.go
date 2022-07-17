@@ -28,11 +28,4 @@ func main() {
 	ref = teacher.ProtoReflect()
 	descriptor = ref.Descriptor()
 	fmt.Printf("Name: %s\n", descriptor.Name())
-
-	str := "dog dog dog"
-	fmt.Printf("str: %v\n", str)
-	bs := []byte(str)
-	fmt.Printf("bs: %v\n", bs)
-	bstr := string(bs)
-	fmt.Printf("bstr: %v\n", bstr)
 }
