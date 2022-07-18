@@ -90,3 +90,25 @@ func (cc *Client13Manager) addNewConnection(addr string, c *Client13) {
 	cc.ClientMap[addr] = c
 	cc.cmMux.Unlock()
 }
+
+// func (cc *Client13Manager) Register(s string, msg string, mc *callback.MessageCallback) {
+// 	si := GetServerInfo(s)
+// 	addr := si.GetAddress()
+
+// 	if c, ok := cc.ClientMap[addr]; ok {
+// 		c.Register(msg, mc)
+// 	} else {
+// 		fmt.Printf("addr %s is not exist\n", addr)
+// 	}
+// }
+
+func (cc *Client13Manager) RegisterFunc(s string, msg string, callback func([]byte)) {
+	si := GetServerInfo(s)
+	addr := si.GetAddress()
+
+	if c, ok := cc.ClientMap[addr]; ok {
+		c.RegisterFunc(msg, callback)
+	} else {
+		fmt.Printf("addr %s is not exist\n", addr)
+	}
+}

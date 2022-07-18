@@ -4,6 +4,7 @@ package main
 // server
 
 import (
+	"GoLearning/client/demo13/site"
 	"fmt"
 	"sync"
 	"time"
@@ -50,6 +51,9 @@ func main() {
 	// port := 8080
 	// GetClient13Manager().Connect(GS)
 	time.Sleep(3 * time.Second)
+	tsg := site.TGS{}
+	tsg.Init()
+	GetClient13Manager().RegisterFunc(GS, "Message", tsg.Callback)
 
 	GetClient13Manager().Send(GS, []byte{Req, 'F', 'i', 'r', 's', 't'})
 	GetClient13Manager().Send(GS, []byte{Req, 'S', 'e', 'c', 'o', 'n', 'd'})

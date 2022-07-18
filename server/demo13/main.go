@@ -62,7 +62,7 @@ func (s *Server13) Init(ip string, port int) error {
 
 // send message to client every 15 seconds
 func (s *Server13) pushGRT() {
-	data := []byte{protobufReq, '#'}
+	data := []byte{protobufReq, 1}
 	var content []byte
 	var err error
 	var messageProto lproto.Message
@@ -207,7 +207,7 @@ func (s *Server13) rHandler(conn net.Conn, C *Conn) {
 			fmt.Println("resv ht packet ack")
 		} else {
 			delete(s.ConnMap, C.u)
-			fmt.Println("delete user!")
+			fmt.Println("delete user!\nherr: ", herr)
 			return
 		}
 	}
@@ -217,8 +217,13 @@ func (s *Server13) work(C *Conn) {
 	time.Sleep(5 * time.Second)
 	C.Wch <- []byte{Req, '#', 'h', 'e', 'l', 'l', 'o'}
 
-	time.Sleep(15 * time.Second)
-	C.Wch <- []byte{Req, '#', 'h', 'e', 'l', 'l', 'o'}
+	time.Sleep(5 * time.Second)
+	data := []byte{protobufReq, 2}
+	teacher := &lproto.Teacher{Name: "Bob", Age: 32}
+	msg, _ := proto.Marshal(teacher)
+	data = append(data, msg...)
+
+	C.Wch <- data
 	// 從讀ch讀信息
 	/*	ticker := time.NewTicker(20 * time.Second)
 		for {

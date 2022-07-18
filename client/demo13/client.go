@@ -10,12 +10,13 @@ import (
 )
 
 type Client13 struct {
-	Pch  *chan string
-	Addr string
-	Dch  chan bool
-	Rch  chan []byte
-	Wch  chan []byte
-	conn *net.TCPConn
+	Pch         *chan string
+	Addr        string
+	Dch         chan bool
+	Rch         chan []byte
+	Wch         chan []byte
+	conn        *net.TCPConn
+	callbackMap map[string]func([]byte)
 }
 
 // TODO: 連線 和 維持運行 要區分為兩個區塊，方便斷線後重連
@@ -24,6 +25,7 @@ func (c *Client13) Init(ip string, port int) {
 	c.Dch = make(chan bool)
 	c.Rch = make(chan []byte)
 	c.Wch = make(chan []byte)
+	c.callbackMap = map[string]func([]byte){}
 
 	addr, _ := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%d", ip, port))
 	var err error
@@ -125,14 +127,36 @@ func (c *Client13) rHandler(conn *net.TCPConn) {
 			conn.Write([]byte{Res, '#'})
 		} else if data[0] == protobufReq {
 			fmt.Println("Recieve protobuf data")
+			pbtype := data[1]
+
 			data = make([]byte, 4096)
 			length, _ = conn.Read(data)
+			var pbstring string
 
-			messagePb := lproto.Message{}
-			err = proto.Unmarshal(data[:length], &messagePb)
-			checkError(err)
+			switch pbtype {
+			case 1:
+				fmt.Println("Pb type: Message")
+				pbstring = "Message"
+				messagePb := lproto.Message{}
+				err = proto.Unmarshal(data[:length], &messagePb)
+				checkError(err)
+				fmt.Printf("messagePb.Text: %s, messagePb.Timestamp: %v\n", messagePb.Text, messagePb.Timestamp)
+			case 2:
+				fmt.Println("Pb type: Teacher")
+				pbstring = "Teacher"
+				taecher := lproto.Teacher{}
+				err = proto.Unmarshal(data[:length], &taecher)
+				checkError(err)
+				fmt.Printf("taecher.Name: %s, taecher.Age: %v\n", taecher.Name, taecher.Age)
+			default:
+				fmt.Println("Pb type: Nothing")
+				pbstring = "Nothing"
+			}
 
-			fmt.Printf("received message: %s, timestamp: %v\n", messagePb.Text, messagePb.Timestamp)
+			if callback, ok := c.callbackMap[pbstring]; ok {
+				callback(data[:length])
+			}
+
 			// Rch <- data[2:]
 			conn.Write([]byte{Res, '#'})
 		}
@@ -161,4 +185,14 @@ func (c *Client13) work() {
 
 func (c *Client13) send(msg []byte) {
 	c.Wch <- msg
+}
+
+// func (c *Client13) Register(msg string, mc *callback.MessageCallback) {
+// 	fmt.Printf("Client13 Register -> %s\n", msg)
+// 	c.callbackMap[msg] = (*mc).Callback
+// }
+
+func (c *Client13) RegisterFunc(msg string, callback func([]byte)) {
+	fmt.Printf("Client13 RegisterFunc -> %s\n", msg)
+	c.callbackMap[msg] = callback
 }
