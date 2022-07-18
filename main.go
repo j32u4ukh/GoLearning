@@ -32,6 +32,9 @@ func main() {
 	_ = proto.Unmarshal(data, messagePb)
 	fmt.Printf("messagePb: %+v, FullName: %+v\n", messagePb, descriptor.FullName())
 
+	b := []byte{1, 2}
+	fmt.Println("b:", b)
+
 	// filedIds := descriptor.Fields()
 
 	// for i := 0; i < filedIds.Len(); i++ {
