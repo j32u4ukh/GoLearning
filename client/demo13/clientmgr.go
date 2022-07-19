@@ -63,10 +63,10 @@ func (cc *Client13Manager) Connect(s string, wg *sync.WaitGroup) {
 		client := &Client13{Pch: &cc.Cch, Addr: addr}
 		cc.addNewConnection(addr, client)
 
-		// // 連線
+		// 連線
 		client.Init(si.Ip, si.Port)
 
-		// // 維持運行
+		// 維持運行
 		client.Run(wg)
 
 		// client.RunServer(si.Ip, si.Port, wg)
