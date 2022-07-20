@@ -72,7 +72,7 @@ func (am *AskerManager) Connect(s string, wg *sync.WaitGroup) {
 
 	if err != nil {
 		// 連線失敗，再次連線
-		fmt.Printf("連線至 %s 時發生錯誤", addr)
+		fmt.Printf("連線至 %s 時發生錯誤\n", addr)
 		am.Connect(s, wg)
 
 	} else {
@@ -82,9 +82,12 @@ func (am *AskerManager) Connect(s string, wg *sync.WaitGroup) {
 		if asker.isShutdown {
 			// 因中斷連線而到這裡，從 AskerMap 中移除連線資訊
 			delete(am.AskerMap, addr)
+
+			// 將中斷伺服器的資訊傳給上層物件
 			am.Cch <- asker.Addr
 		} else {
 			// 異常斷線，需再次連線
+			fmt.Printf("連線至 %s 異常斷線，需再次連線", addr)
 			am.Connect(s, nil)
 		}
 	}

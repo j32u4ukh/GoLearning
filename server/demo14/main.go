@@ -1,10 +1,10 @@
 package main
 
 import (
-	"GoLearning/server/demo14/utils"
+	"GoLearning/server/demo14/ask"
+	"GoLearning/server/demo14/config"
 	"fmt"
 	"os"
-	"time"
 )
 
 type Service struct {
@@ -12,47 +12,33 @@ type Service struct {
 	StopCh chan bool
 }
 
-func chanelTest(c chan string) {
-	c <- "A"
-	time.Sleep(2 * time.Second)
-	c <- "B"
-}
-
-func (s Service) channelListener(c chan string) {
-	for {
-		if d := <-c; d != "" {
-			fmt.Println(d)
-
-			if d == "C" {
-				s.StopCh <- true
-				return
-			}
-		}
-	}
-}
-
 func main() {
 	fmt.Println("整合收發服務")
 	service := Service{StopCh: make(chan bool)}
+	fmt.Println(os.Args[1:])
 
-	for i, arg := range os.Args[1:] {
-		fmt.Println(i, arg)
+	if os.Args[1] == "ask" {
+		go service.RunAsk()
+
+	} else if os.Args[1] == "ans" {
+		go service.RunAns()
 	}
-	config := utils.GetConfig()
-	fmt.Println("SendCode.Req:", config.SendCode.Req)
-	fmt.Println("Addr.GS:", config.Addr.GS)
-	fmt.Println("Conn.Alternal:", config.Conn.Alternal)
-
-	c := make(chan string, 3)
-	go chanelTest(c)
-	go func() {
-		c <- "A"
-		time.Sleep(2 * time.Second)
-		c <- "B"
-		time.Sleep(2 * time.Second)
-		c <- "C"
-	}()
-	go service.channelListener(c)
 
 	<-service.StopCh
+}
+
+func (s Service) RunAsk() {
+	ask.Init()
+
+	ask.GetAskerManager().Send(config.GetAddr().GS, []byte{config.GetSendCode().Req, 'F', 'i', 'r', 's', 't'})
+	ask.GetAskerManager().Send(config.GetAddr().GS, []byte{config.GetSendCode().Req, 'S', 'e', 'c', 'o', 'n', 'd'})
+
+	end := <-ask.GetAskerManager().Cch
+	fmt.Println("End of connection.", end)
+
+	s.StopCh <- true
+}
+
+func (s Service) RunAns() {
+
 }

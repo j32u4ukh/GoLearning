@@ -2,6 +2,7 @@ package ask
 
 import (
 	lproto "GoLearning/proto"
+	"GoLearning/server/demo14/config"
 	"GoLearning/server/demo14/utils"
 	"fmt"
 	"net"
@@ -11,7 +12,9 @@ import (
 )
 
 type Asker struct {
+	// 連線位置
 	Addr string
+	// 連線物件
 	conn *net.TCPConn
 	// 是否為連線中
 	isConnected bool
@@ -53,7 +56,7 @@ func (a *Asker) Connect() error {
 
 func (a *Asker) Run(wg *sync.WaitGroup) {
 	defer a.conn.Close()
-	go a.handler(a.conn)
+	go a.handler()
 
 	// 斷線重連時的 wg 將會是 nil
 	if wg != nil {
@@ -66,57 +69,61 @@ func (a *Asker) Run(wg *sync.WaitGroup) {
 	}
 }
 
-func (a *Asker) RunServer(ip string, port int, wg *sync.WaitGroup) {
-	for {
-		addr, _ := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%d", ip, port))
-		var err error
-		a.conn, err = net.DialTCP("tcp", nil, addr)
+// func (a *Asker) RunServer(ip string, port int, wg *sync.WaitGroup) {
+// 	for {
+// 		addr, _ := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%d", ip, port))
+// 		var err error
+// 		a.conn, err = net.DialTCP("tcp", nil, addr)
 
-		if err != nil {
-			fmt.Println("連接服務端失敗:", err.Error())
-			return
-		}
+// 		if err != nil {
+// 			fmt.Println("連接服務端失敗:", err.Error())
+// 			return
+// 		}
 
-		fmt.Println("已連接服務器")
-		defer a.conn.Close()
-		go a.handler(a.conn)
-		wg.Done()
+// 		fmt.Println("已連接服務器")
+// 		defer a.conn.Close()
+// 		go a.handler(a.conn)
+// 		wg.Done()
 
-		if <-a.Dch {
-			fmt.Println("Addr: ", a.Addr)
-			fmt.Println("關閉連接")
-		}
-	}
-}
+// 		if <-a.Dch {
+// 			fmt.Println("Addr: ", a.Addr)
+// 			fmt.Println("關閉連接")
+// 		}
+// 	}
+// }
 
-func (a *Asker) handler(conn *net.TCPConn) {
+func (a *Asker) handler() {
 	data := make([]byte, 128)
 
-	// 直到register ok
+	// 直到 register ok
 	for {
-		conn.Write([]byte{utils.GetSendCode().RegisterReq, '#', '2'})
-		conn.Read(data)
-		//		fmt.Println(string(data))
-		if data[0] == utils.GetSendCode().RegisterRes {
+		// 送出註冊請求
+		a.conn.Write([]byte{config.GetSendCode().RegisterReq, '#', '2'})
+
+		// 取得註冊成功回應
+		a.conn.Read(data)
+
+		if data[0] == config.GetSendCode().RegisterRes {
+			fmt.Println("註冊成功")
 			break
 		}
 	}
 
-	go a.rHandler(conn)
-	go a.wHandler(conn)
-	go a.work()
+	go a.rHandler()
+	go a.wHandler()
+	// go a.work()
 }
 
-func (a *Asker) rHandler(conn *net.TCPConn) {
+func (a *Asker) rHandler() {
 	var err error
 
 	for {
 		// 心跳包,回覆ack
 		data := make([]byte, 2)
-		length, _ := conn.Read(data)
+		length, _ := a.conn.Read(data)
 		fmt.Println("data length:", length)
 
-		if data[0] == utils.GetSendCode().Close {
+		if data[0] == config.GetSendCode().Close {
 			// TODO: 紀錄狀態為結束連線
 			a.Dch <- true
 			a.isShutdown = true
@@ -129,25 +136,25 @@ func (a *Asker) rHandler(conn *net.TCPConn) {
 			return
 		}
 
-		if data[0] == utils.GetSendCode().HeartBeatReq {
+		if data[0] == config.GetSendCode().HeartBeatReq {
 			fmt.Println("recv ht pack")
-			conn.Write([]byte{utils.GetSendCode().RegisterRes, '#', 'h'})
+			a.conn.Write([]byte{config.GetSendCode().RegisterRes, '#', 'h'})
 			fmt.Println("send ht pack ack")
-		} else if data[0] == utils.GetSendCode().Req {
+		} else if data[0] == config.GetSendCode().Req {
 			fmt.Println("recv data pack")
 			data = make([]byte, 4096)
-			length, _ = conn.Read(data)
+			length, _ = a.conn.Read(data)
 
 			fmt.Printf("%v\n", string(data))
 			fmt.Printf("length: %d\n", length)
-			a.Rch <- data[2:]
-			conn.Write([]byte{utils.GetSendCode().Res, '#'})
-		} else if data[0] == utils.GetSendCode().ProtobufReq {
+			// a.Rch <- data[2:]
+			a.conn.Write([]byte{config.GetSendCode().Res, '#'})
+		} else if data[0] == config.GetSendCode().ProtobufReq {
 			fmt.Println("Recieve protobuf data")
 			pbtype := data[1]
 
 			data = make([]byte, 4096)
-			length, _ = conn.Read(data)
+			length, _ = a.conn.Read(data)
 			var pbstring string
 
 			switch pbtype {
@@ -175,30 +182,30 @@ func (a *Asker) rHandler(conn *net.TCPConn) {
 			}
 
 			// Rch <- data[2:]
-			conn.Write([]byte{utils.GetSendCode().Res, '#'})
+			a.conn.Write([]byte{config.GetSendCode().Res, '#'})
 		}
 	}
 }
 
-func (a *Asker) wHandler(conn net.Conn) {
+func (a *Asker) wHandler() {
 
 	for {
 		if msg := <-a.Wch; msg != nil {
 			fmt.Printf("send code %v data: %v\n", msg[0], string(msg[1:]))
-			conn.Write(msg)
+			a.conn.Write(msg)
 		}
 	}
 
 }
 
-func (a *Asker) work() {
-	for {
-		if msg := <-a.Rch; msg != nil {
-			fmt.Println("work recv " + string(msg))
-			a.Wch <- []byte{utils.GetSendCode().Req, '#', 'x', 'x', 'x', 'x', 'x'}
-		}
-	}
-}
+// func (a *Asker) work() {
+// 	for {
+// 		if msg := <-a.Rch; msg != nil {
+// 			fmt.Println("work recv " + string(msg))
+// 			a.Wch <- []byte{config.GetSendCode().Req, '#', 'x', 'x', 'x', 'x', 'x'}
+// 		}
+// 	}
+// }
 
 func (a *Asker) send(msg []byte) {
 	a.Wch <- msg
