@@ -7,6 +7,7 @@ type Ans struct {
 }
 
 func Init() {
+	// GetAnserManager().listenTCP()
 	// server := &Ans{}
 	// err := server.Init("127.0.0.1", 8080)
 

@@ -22,7 +22,7 @@ type AskerManager struct {
 func GetAskerManager() *AskerManager {
 	if instance == nil {
 		once.Do(func() {
-			fmt.Println("Creating Single Instance Now")
+			fmt.Println("Creating AskerManager Instance Now")
 			instance = &AskerManager{}
 			instance.Init()
 		})
