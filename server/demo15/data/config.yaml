@@ -1,0 +1,18 @@
+# yaml 中不可使用 tab，只可使用空格
+SendCode:
+  Close: 0
+  RegisterReq: 1
+  RegisterRes: 2
+  HeartBeatReq: 3 
+  HeartBeatRes: 4
+  Req: 5
+  Res: 6
+  ProtobufReq: 7
+  ProtobufRes: 8
+# Adddress
+Addr:
+  GS: GS
+  AS: AS
+Conn:
+  RetryTimes: 3
+  Alternal: 3.141592653589

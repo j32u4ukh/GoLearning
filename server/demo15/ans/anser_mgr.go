@@ -1,6 +1,7 @@
 package ans
 
 import (
+	"GoLearning/server/demo14/utils"
 	"fmt"
 	"net"
 	"sync"
@@ -30,16 +31,17 @@ func (am *AnserManager) Init() {
 	am.anserMap = map[string]*Anser{}
 }
 
-func (am *AnserManager) listenTCP(ip string, port int) error {
-	addr := fmt.Sprintf("%s:%d", ip, port)
+func (am *AnserManager) listenTCP(s string, port int) error {
+	si := utils.GetServerInfo(s)
+	addr := si.GetAddress()
 	var ask *Anser
 	var ok bool
 
 	if ask, ok = am.anserMap[addr]; !ok {
-		ask = am.addAnswer(addr, ip, port)
+		// ask = am.addAnswer(addr, ip, port)
 	}
 
-	err := ask.Connect()
+	err := ask.ListenTCP()
 
 	// if err != nil {
 

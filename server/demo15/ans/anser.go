@@ -38,7 +38,7 @@ func NewConn(uid string) *Conn {
 	return &Conn{Rch: make(chan []byte), Wch: make(chan []byte), uid: uid}
 }
 
-func (a *Anser) Connect() error {
+func (a *Anser) ListenTCP() error {
 	var err error
 	a.listener, err = net.ListenTCP("tcp", a.laddr)
 	return err
@@ -68,6 +68,7 @@ func (a *Anser) handler(conn net.Conn) {
 	var uid string
 	var C *Conn
 
+	// bind
 	for {
 		conn.Read(data)
 		fmt.Println("客戶端首次連接數據:", string(data))
