@@ -1,13 +1,14 @@
 package ans
 
-// golang實現帶有心跳檢測的tcp長連接
-// server
-
-type Ans struct {
-}
+import (
+	"GoLearning/server/demo15/config"
+	"GoLearning/server/demo15/log15"
+)
 
 func Init() {
-	// GetAnserManager().listenTCP()
+	log15.Logger().Debug("Ans.Init()")
+	GetAnserManager().listenTCP(config.GetAddr().GS)
+	log15.Logger().Debug("After Ans.Init()")
 	// server := &Ans{}
 	// err := server.Init("127.0.0.1", 8080)
 

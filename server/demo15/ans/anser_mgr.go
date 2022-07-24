@@ -1,7 +1,8 @@
 package ans
 
 import (
-	"GoLearning/server/demo14/utils"
+	"GoLearning/server/demo15/log15"
+	"GoLearning/server/demo15/utils"
 	"fmt"
 	"net"
 	"sync"
@@ -28,26 +29,37 @@ func GetAnserManager() *AnserManager {
 }
 
 func (am *AnserManager) Init() {
-	am.anserMap = map[string]*Anser{}
+	am.anserMap = make(map[string]*Anser)
 }
 
-func (am *AnserManager) listenTCP(s string, port int) error {
+func (am *AnserManager) listenTCP(s string) error {
+	// fmt.Printf("Listen to %s\n", s)
 	si := utils.GetServerInfo(s)
 	addr := si.GetAddress()
+	log15.Logger().Debug(fmt.Sprintf("Listen to %s, addr: %s\n", s, addr))
 	var ask *Anser
 	var ok bool
 
 	if ask, ok = am.anserMap[addr]; !ok {
-		// ask = am.addAnswer(addr, ip, port)
+		ip := si.GetIp()
+		port := si.GetPort()
+		ask = am.addAnswer(addr, ip, port)
 	}
 
 	err := ask.ListenTCP()
 
-	// if err != nil {
+	if err != nil {
+		log15.Logger().Error(err.Error())
+		return err
 
-	// } else {
+	} else {
+		log15.Logger().Debug("ask.Run()")
+		go ask.Run()
+	}
 
-	// }
+	log15.Logger().Debug("Waitting for ask.stopCh")
+	<-ask.stopCh
+	log15.Logger().Debug("Got ask.stopCh")
 
 	return err
 }

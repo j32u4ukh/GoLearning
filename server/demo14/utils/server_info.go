@@ -33,6 +33,14 @@ func GetServerInfo(s string) *ServerInfo {
 	return &ServerInfo{}
 }
 
+func (s ServerInfo) GetIp() string {
+	return s.ip
+}
+
+func (s ServerInfo) GetPort() int {
+	return s.port
+}
+
 func (s ServerInfo) GetAddress() string {
 	return s.addr
 }

@@ -4,8 +4,8 @@ package ask
 // server
 
 import (
-	"GoLearning/server/demo14/ask/site"
-	"GoLearning/server/demo14/config"
+	"GoLearning/server/demo15/ask/site"
+	"GoLearning/server/demo15/config"
 	"sync"
 )
 

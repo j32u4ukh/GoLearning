@@ -1,7 +1,8 @@
 package ask
 
 import (
-	"GoLearning/server/demo14/utils"
+	"GoLearning/server/demo15/log15"
+	"GoLearning/server/demo15/utils"
 	"fmt"
 	"sync"
 )
@@ -58,13 +59,14 @@ func (am *AskerManager) Connect(s string, wg *sync.WaitGroup) {
 		// 若連往 addr 的連線尚不存在
 
 		// 建立 Asker 實體
-		asker = &Asker{Addr: addr}
+		// asker = &Asker{Addr: addr}
+		asker = NewAsker(addr)
 
 		// 紀錄連線關係
 		am.addNewConnection(addr, asker)
 
 		// 初始化
-		asker.Init()
+		// asker.Init()
 	}
 
 	// 連線
@@ -73,6 +75,7 @@ func (am *AskerManager) Connect(s string, wg *sync.WaitGroup) {
 	if err != nil {
 		// 連線失敗，再次連線
 		fmt.Printf("連線至 %s 時發生錯誤\n", addr)
+		log15.Logger().Error(fmt.Sprintf("連線至 %s 時發生錯誤, err: %+v\n", addr, err.Error()))
 		am.Connect(s, wg)
 
 	} else {

@@ -1,8 +1,10 @@
 package main
 
 import (
-	"GoLearning/server/demo14/ask"
-	"GoLearning/server/demo14/config"
+	"GoLearning/server/demo15/ans"
+	"GoLearning/server/demo15/ask"
+	"GoLearning/server/demo15/config"
+	"GoLearning/server/demo15/log15"
 	"fmt"
 	"os"
 )
@@ -13,9 +15,8 @@ type Service struct {
 }
 
 func main() {
-	fmt.Println("整合收發服務")
 	service := Service{StopCh: make(chan bool)}
-	fmt.Println(os.Args[1:])
+	log15.Logger().Debug(fmt.Sprintf("整合收發服務, Args: %+v", os.Args[1:]))
 
 	if os.Args[1] == "ask" {
 		go service.RunAsk()
@@ -40,5 +41,7 @@ func (s Service) RunAsk() {
 }
 
 func (s Service) RunAns() {
-
+	ans.Init()
+	fmt.Println("After ans.Init()")
+	s.StopCh <- true
 }

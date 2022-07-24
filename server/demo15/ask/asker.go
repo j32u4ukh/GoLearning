@@ -2,8 +2,8 @@ package ask
 
 import (
 	lproto "GoLearning/proto"
-	"GoLearning/server/demo14/config"
-	"GoLearning/server/demo14/utils"
+	"GoLearning/server/demo15/config"
+	"GoLearning/server/demo15/utils"
 	"fmt"
 	"net"
 	"sync"
@@ -28,16 +28,25 @@ type Asker struct {
 	callbackMap map[string]func([]byte)
 }
 
-// TODO: 連線 和 維持運行 要區分為兩個區塊，方便斷線後重連
-// TODO: 先註冊要連線的目標、callback 函式，再一起進行連線。目前利用 sync.WaitGroup 等待所有連線成功
-func (a *Asker) Init() {
-	a.isConnected = false
-	a.isShutdown = false
-	a.Dch = make(chan bool)
-	a.Rch = make(chan []byte)
-	a.Wch = make(chan []byte)
-	a.callbackMap = map[string]func([]byte){}
+func NewAsker(addr string) *Asker {
+	ans := &Asker{Addr: addr}
+	ans.isConnected = false
+	ans.isShutdown = false
+	ans.Dch = make(chan bool)
+	ans.Rch = make(chan []byte)
+	ans.Wch = make(chan []byte)
+	ans.callbackMap = map[string]func([]byte){}
+	return ans
 }
+
+// func (a *Asker) Init() {
+// 	a.isConnected = false
+// 	a.isShutdown = false
+// 	a.Dch = make(chan bool)
+// 	a.Rch = make(chan []byte)
+// 	a.Wch = make(chan []byte)
+// 	a.callbackMap = map[string]func([]byte){}
+// }
 
 func (a *Asker) Connect() error {
 	var err error
@@ -119,7 +128,7 @@ func (a *Asker) rHandler() {
 
 	for {
 		// 心跳包,回覆ack
-		data := make([]byte, 2)
+		data := make([]byte, 1)
 		length, _ := a.conn.Read(data)
 		fmt.Println("data length:", length)
 
@@ -138,7 +147,7 @@ func (a *Asker) rHandler() {
 
 		if data[0] == config.GetSendCode().HeartBeatReq {
 			fmt.Println("recv ht pack")
-			a.conn.Write([]byte{config.GetSendCode().RegisterRes, '#', 'h'})
+			a.conn.Write([]byte{config.GetSendCode().RegisterRes, 'h', 'i'})
 			fmt.Println("send ht pack ack")
 		} else if data[0] == config.GetSendCode().Req {
 			fmt.Println("recv data pack")
@@ -148,7 +157,7 @@ func (a *Asker) rHandler() {
 			fmt.Printf("%v\n", string(data))
 			fmt.Printf("length: %d\n", length)
 			// a.Rch <- data[2:]
-			a.conn.Write([]byte{config.GetSendCode().Res, '#'})
+			a.conn.Write([]byte{config.GetSendCode().Res})
 		} else if data[0] == config.GetSendCode().ProtobufReq {
 			fmt.Println("Recieve protobuf data")
 			pbtype := data[1]
@@ -182,7 +191,7 @@ func (a *Asker) rHandler() {
 			}
 
 			// Rch <- data[2:]
-			a.conn.Write([]byte{config.GetSendCode().Res, '#'})
+			a.conn.Write([]byte{config.GetSendCode().Res})
 		}
 	}
 }
@@ -191,21 +200,12 @@ func (a *Asker) wHandler() {
 
 	for {
 		if msg := <-a.Wch; msg != nil {
-			fmt.Printf("send code %v data: %v\n", msg[0], string(msg[1:]))
+			fmt.Printf("send code %v, data: %v\n", msg[0], string(msg[1:]))
 			a.conn.Write(msg)
 		}
 	}
 
 }
-
-// func (a *Asker) work() {
-// 	for {
-// 		if msg := <-a.Rch; msg != nil {
-// 			fmt.Println("work recv " + string(msg))
-// 			a.Wch <- []byte{config.GetSendCode().Req, '#', 'x', 'x', 'x', 'x', 'x'}
-// 		}
-// 	}
-// }
 
 func (a *Asker) send(msg []byte) {
 	a.Wch <- msg

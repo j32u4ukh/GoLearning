@@ -46,7 +46,6 @@ func main() {
 
 	if os.Args[1] == "ask" {
 		go service.RunAsk()
-
 	} else if os.Args[1] == "ans" {
 		go service.RunAns()
 	} else if os.Args[1] == "log" {

@@ -1,7 +1,8 @@
 package ans
 
 import (
-	"GoLearning/server/demo14/config"
+	"GoLearning/server/demo15/config"
+	"GoLearning/server/demo15/log15"
 	"fmt"
 	"net"
 	"time"
@@ -17,35 +18,23 @@ type Anser struct {
 	stopCh chan bool
 }
 
-// 連線到 Anser 的使用者
-type Conn struct {
-	// user id
-	uid string
-	// 連線物件
-	conn *net.TCPConn
-	// 讀、寫、斷線 等功能使用 chan，應該是要利用其阻塞的特性
-	Dch chan bool
-	Rch chan []byte
-	Wch chan []byte
-}
-
 func NewAnser(ip net.IP, port int) *Anser {
-	a := &Anser{ConnMap: make(map[string]*Conn), laddr: &net.TCPAddr{IP: ip, Port: port, Zone: ""}}
+	a := &Anser{ConnMap: make(map[string]*Conn)}
+	a.laddr = &net.TCPAddr{IP: ip, Port: port, Zone: ""}
 	return a
-}
-
-func NewConn(uid string) *Conn {
-	return &Conn{Rch: make(chan []byte), Wch: make(chan []byte), uid: uid}
 }
 
 func (a *Anser) ListenTCP() error {
 	var err error
 	a.listener, err = net.ListenTCP("tcp", a.laddr)
+	log15.Logger().Debug(fmt.Sprintf("laddr: %s", a.laddr.String()))
 	return err
 }
 
 // 等待使用者連入
 func (a *Anser) Run() {
+	log15.Logger().Debug("Anser start running")
+
 	for {
 		conn, err := a.listener.AcceptTCP()
 
@@ -80,6 +69,7 @@ func (a *Anser) handler(conn net.Conn) {
 			uid = string(data[2:])
 			fmt.Println("uid:", uid)
 			C = NewConn(uid)
+			C.conn = conn
 			a.ConnMap[uid] = C
 			break
 		} else {
@@ -96,6 +86,7 @@ func (a *Anser) handler(conn net.Conn) {
 	// Wait for shutdown command
 	if <-C.Dch {
 		fmt.Println("close handler goroutine")
+		a.stopCh <- true
 	}
 }
 
@@ -112,6 +103,7 @@ func (a *Anser) wHandler(C *Conn) {
 		case <-ticker.C:
 			if _, ok := a.ConnMap[C.uid]; !ok {
 				fmt.Println("conn die, close WHandler")
+				C.Dch <- true
 				return
 			}
 		}
@@ -140,15 +132,13 @@ func (s *Anser) rHandler(C *Conn) {
 				fmt.Println("recv client data ack")
 			} else if data[0] == config.GetSendCode().Req {
 				fmt.Println("recv client data")
-				fmt.Println(data)
-				C.conn.Write([]byte{config.GetSendCode().Res, '#'})
-				// C.Rch <- data
+				fmt.Println(string(data[1:]))
+				C.conn.Write([]byte{config.GetSendCode().Res})
 			}
-
 			continue
 		}
 
-		C.conn.Write([]byte{config.GetSendCode().HeartBeatReq, '#'})
+		C.conn.Write([]byte{config.GetSendCode().HeartBeatReq})
 		fmt.Println("send ht packet")
 
 		// Update the time that will kill the connection
@@ -160,6 +150,7 @@ func (s *Anser) rHandler(C *Conn) {
 		} else {
 			delete(s.ConnMap, C.uid)
 			fmt.Println("delete user!\nherr: ", herr)
+			C.Dch <- true
 			return
 		}
 	}
