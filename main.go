@@ -7,6 +7,9 @@ import (
 	lproto "GoLearning/proto"
 
 	// "github.com/golang/protobuf/proto"
+
+	"github.com/go-vgo/robotgo"
+	hook "github.com/robotn/gohook"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -34,32 +37,14 @@ func main() {
 
 	b := []byte{1, 2}
 	fmt.Println("b:", b)
-
-	// filedIds := descriptor.Fields()
-
-	// for i := 0; i < filedIds.Len(); i++ {
-	// 	filedId := filedIds.Get(i)
-	// 	fmt.Printf("Has %s? %v\n", filedId.Name(), ref.Has(filedId))
-	// }
-
-	// teacher := &lproto.Teacher{}
-	// ref = teacher.ProtoReflect()
-	// descriptor = ref.Descriptor()
-	// fmt.Printf("Name: %s\n", descriptor.Name())
-
+	Keyboard()
 }
 
-// func newMessage(name string) (proto.Message, error) {
-// 	reflectType, _ := protoregistry.GlobalTypes.FindMessageByName(protoreflect.FullName(name))
-// 	if reflectType == nil {
-// 		return nil, fmt.Errorf("protolog: no Message registered for name: %s", name)
-// 	}
+func Keyboard() {
+	robotgo.EventHook(hook.KeyDown, []string{}, func(e hook.Event) {
+		fmt.Println(e.Keycode, e.Keychar)
+	})
 
-// 	return reflect.New(reflectType.Elem()).Interface().(proto.Message), nil
-// }
-
-func makeInstance(name string) interface{} {
-	v := reflect.New(typeRegistry[name]).Elem()
-	// Maybe fill in fields here if necessary
-	return v.Interface()
+	s := robotgo.EventStart()
+	<-robotgo.EventProcess(s)
 }

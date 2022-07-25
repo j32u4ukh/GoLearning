@@ -168,7 +168,8 @@ func (s *Server) rHandler(conn net.Conn, C *Conn) {
 
 func main() {
 	server := &Server{}
-	err := server.Init("192.168.100.144", 3306)
+	// err := server.Init("3.1.109.13", 6205)
+	err := server.Init("https://pergehero.ifunservice.com", 6205)
 
 	if err != nil {
 		fmt.Println("監聽端口失敗:", err.Error())
